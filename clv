@@ -1,0 +1,124 @@
+
+# coding: utf-8
+
+# In[14]:
+
+
+import pandas as pd 
+from sklearn.linear_model import LogisticRegression
+from sklearn.cross_validation import train_test_split
+from sklearn import metrics
+from sklearn.cross_validation import cross_val_score
+from sklearn.externals import joblib
+from sklearn.utils import resample
+from sklearn.externals import joblib
+
+
+# In[2]:
+
+
+clv = pd.read_csv("../../data/coupons/cfv_df.csv")
+
+
+# In[4]:
+
+
+len(clv)
+
+
+# In[5]:
+
+
+user_coupan_features = pd.read_csv("../../data/coupons/user_coupan_features.csv")
+
+
+# In[6]:
+
+
+len(user_coupan_features)
+
+
+# In[8]:
+
+
+user_coupan_features_sample = user_coupan_features.sample(283266)
+
+
+# In[9]:
+
+
+user_coupan_features_sample.head()
+
+
+# In[18]:
+
+
+user_coupan_features_sample_unique_users = user_coupan_features_sample.USER_ID_hash.unique()
+
+
+# In[40]:
+
+
+user_coupan_features_sample_unique_users = user_coupan_features_sample_unique_users[:1]
+
+
+# In[28]:
+
+
+user_coupan_features_sample_unique_users
+
+
+# In[ ]:
+
+
+user_coupan_features_sample_unique_users
+
+
+# In[17]:
+
+
+MODEL = joblib.load('D:/projects/customer-analytics/test_api/ml-app/pickles/coupons-rf-v1.0.pkl')
+
+
+# In[ ]:
+
+
+label_index = MODEL.predict(features)
+
+
+# In[21]:
+
+
+user_coupan_features_sample
+
+
+# In[63]:
+
+
+for user in user_coupan_features_sample_unique_users:
+    df = user_coupan_features_sample[user_coupan_features_sample.USER_ID_hash==user]
+    features= df.drop(['I_DATE_DATE','Unnamed: 0','VIEW_COUPON_ID_hash','USER_ID_hash','PURCHASE_FLG'],axis = 1)
+    #print(features.columns)
+    predicted_prob = MODEL.predict_proba(features)
+    #print(predicted_prob)
+    df['predicted_prob_1'] = predicted_prob[:,1]
+    user_coupan_pred = df[['USER_ID_hash','VIEW_COUPON_ID_hash','predicted_prob_1']]
+    user_coupan_pred = user_coupan_pred.sort_values(by = 'predicted_prob_1',ascending=False)
+    user_coupan_pred = user_coupan_pred.drop_duplicates(['USER_ID_hash','VIEW_COUPON_ID_hash'])
+    user_coupan_pred = user_coupan_pred[:3]
+    print(user_coupan_pred[:3])
+    
+    
+
+
+# In[60]:
+
+
+user_coupan_pred.pivot()
+
+
+# In[64]:
+
+
+user_coupan_pred.pivot(index = "USER_ID_hash", columns ="VIEW_COUPON_ID_hash",values = "predicted_prob_1")
+
